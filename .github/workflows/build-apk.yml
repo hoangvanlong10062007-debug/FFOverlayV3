@@ -1,4 +1,5 @@
 
+
 name: Build FF Overlay APK
 
 on:
@@ -32,18 +33,25 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path("app/build.gradle.kts")
-          s = p.read_text()
-          old = '    kotlinOptions { jvmTarget = "17" }'
-          new = '''    compileOptions {
-              sourceCompatibility = JavaVersion.VERSION_17
-              targetCompatibility = JavaVersion.VERSION_17
-          }
 
-          kotlinOptions { jvmTarget = "17" }'''
-          if old not in s:
-              raise SystemExit("Không tìm thấy cấu hình Kotlin cần sửa")
-          p.write_text(s.replace(old, new))
+          p = Path("app/build.gradle")
+          s = p.read_text()
+
+          config = """
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+          """
+
+          if "sourceCompatibility JavaVersion.VERSION_17" not in s:
+              s = s.replace("android {", "android {" + config, 1)
+
+          p.write_text(s)
+          print("Đã cập nhật cấu hình Java/Kotlin 17")
           PY
 
       - name: Build APK
