@@ -4,7 +4,7 @@ name: Build FF Overlay APK
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -25,8 +25,26 @@ jobs:
           gradle-version: "8.7"
 
       - name: Extract source
+        run: unzip -q FFOverlayV3_MobileBuild.zip
+
+      - name: Fix JVM target
+        working-directory: FFOverlayV3
         run: |
-          unzip -q FFOverlayV3_MobileBuild.zip
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("app/build.gradle.kts")
+          s = p.read_text()
+          old = '    kotlinOptions { jvmTarget = "17" }'
+          new = '''    compileOptions {
+              sourceCompatibility = JavaVersion.VERSION_17
+              targetCompatibility = JavaVersion.VERSION_17
+          }
+
+          kotlinOptions { jvmTarget = "17" }'''
+          if old not in s:
+              raise SystemExit("Không tìm thấy cấu hình Kotlin cần sửa")
+          p.write_text(s.replace(old, new))
+          PY
 
       - name: Build APK
         working-directory: FFOverlayV3
